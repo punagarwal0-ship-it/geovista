@@ -1,0 +1,233 @@
+
+Geospatial Intelligence Platform
+Document 2 — Frontend product context, user experience and integration brief
+PROJECT CONTEXT • IMPLEMENTATION BRIEF FOR ANTIGRAVITY
+1. Product vision
+Build a web-based Earth-observation and geospatial intelligence interface inspired by the discoverability and map workflow of Bhoonidhi Browse & Order and the visualisation/animation concepts of Bhoonidhi VISTA. The product should go beyond image browsing by presenting historical measurements, detected changes and model-generated forecasts for a user-selected location.
+The interface is not a clone of either reference product. Use them as functional inspiration while creating an original, coherent user experience. Do not copy logos, proprietary assets or branding.
+2. Core user story
+A user opens a world map, selects a point or draws an area, chooses an analysis topic and date range, then views available satellite observations. The user can compare dates or animate imagery, inspect historical feature graphs, review detected changes and request a forecast. The interface must clearly distinguish observed historical data from model predictions.
+3. Primary application layout
+Top navigation: product identity, map/analysis navigation, data catalogue, saved AOIs, jobs/notifications and user profile.
+Left control panel: AOI tools, phenomenon selector, data sources, date range, layer controls and analysis settings. Include SAR visualisation settings, such as RGB channel assignment, colour-map selection and display adjustments, when supported by the selected SAR dataset.
+Main map canvas: interactive world map with satellite basemap, scene footprints, AOI geometry, thematic overlays and prediction layers.
+Right analysis panel: selected AOI summary, observation availability, metrics, charts, change events, forecasts and uncertainty.
+Bottom timeline: date slider, play/pause, frame stepping and animation controls when temporal imagery is available.
+Keep the map as the primary workspace. Panels should be collapsible/resizable where practical so users can inspect the map without losing analytical context. On smaller screens, use a responsive drawer or tabbed panels.
+4. Main screens and workflows
+A. Landing / workspace
+Provide a clear entry into the interactive map workspace.
+Show concise guidance: select an area, choose a phenomenon, choose dates, analyse.
+Optionally show recent AOIs and recent analysis jobs after authentication.
+B. Interactive map workspace
+Pan, zoom, reset extent and search for a place or coordinates.
+Select a point, draw/edit a polygon or rectangle, and clear the AOI.
+Support GeoJSON upload in the first version; add KML/KMZ and shapefile support later if feasible.
+Display AOI boundary, area/coordinates and validation errors.
+Display satellite scene footprints and selectable scenes when catalogue results are available.
+Allow map layer visibility, opacity and ordering controls.
+C. Historical visualisation
+Select a date or observation from the available timeline.
+Provide before/after comparison using a swipe/side-by-side view where practical.
+Provide animation playback across valid observations, with speed and frame controls.
+Show acquisition date, sensor, product/collection, resolution and quality/cloud metadata.
+Do not interpolate missing acquisitions or imply continuous observation where data is sparse.
+G. SAR image visualisation and colour correction
+Provide an interactive SAR visualisation feature for generating false-colour RGB composites from available SAR measurements.
+Allow users to assign available SAR channels or polarisation measurements to red, green and blue channels.
+Support common polarimetric combinations such as HH, HV and VV where the selected dataset provides them.
+Support custom channel combinations and derived combinations, such as HH−VV, HV and HH+HV, where scientifically valid and supported by the input product.
+Provide display adjustments including brightness, contrast, intensity range and linear or logarithmic stretching.
+Provide appropriate colour maps for thematic SAR layers, such as coherence, interferometric phase and displacement.
+Display legends, channel assignments, units and visualisation parameters.
+Allow users to reset adjustments to default settings and export the rendered visualisation.
+Where applicable, provide before/after comparison between the original SAR display and the adjusted visualisation.
+The feature must adapt to the channels and measurements actually available in the selected product. Do not assume every SAR dataset contains HH, HV and VV polarisation.
+Colour adjustments and RGB composites are for visual interpretation only. They must not modify original calibrated SAR measurements or alter numerical inputs used by ML models.
+Distinguish ordinary false-colour composites from scientific thematic products such as InSAR phase, coherence and displacement maps. Do not represent these as interchangeable visualisation techniques.
+Use NASA JPL UAVSAR Postcards as visual and educational references for false-colour SAR representations, not as an operational imagery source.
+D. Analysis dashboard
+Show the selected AOI, phenomenon, date range and data source.
+Show time-series charts with observed values, units, aggregation period and valid observation counts.
+Allow toggling between relevant indicators, such as NDVI, NDWI, land-cover percentage or water area.
+Show change summaries and dated anomaly/event markers.
+Allow users to inspect the data points underlying a chart.
+E. Prediction view
+Separate historical observations from forecast values using distinct visual treatment.
+Display forecast horizon, model name/version, generation date and uncertainty interval.
+Display model limitations, input-data coverage and quality warnings.
+Show a prediction map only when a spatial model output is available; otherwise show an AOI-level chart.
+Never present model output as a certainty or as an observed fact.
+F. Saved work and analysis jobs
+Allow saving AOIs and analysis configurations.
+Show asynchronous job status: queued, running, completed or failed.
+Provide retry/error details and links to completed charts/layers.
+Add export/download controls only when the backend exposes an authorised output asset.
+5. Phenomenon selector and dynamic controls
+Phenomenon
+Relevant indicators / layers
+Potential outputs
+Vegetation / forest
+NDVI, EVI, vegetation cover, land-cover class
+Vegetation trend, loss/recovery metrics, forecast index.
+Water bodies / rivers
+NDWI/MNDWI, water extent, river width
+Area/width trend, water-change map.
+Urbanisation
+NDBI, built-up class, impervious surface
+Urban expansion statistics and transition map.
+Flooding
+SAR backscatter, water extent, rainfall, elevation
+Observed flood extent and susceptibility/forecast products where supported.
+Glacier / snow
+Snow cover, glacier boundary, temperature, DEM
+Area/extent trend and retreat analysis.
+Coastal change
+Shoreline position, water/land masks
+Shoreline movement and erosion/accretion statistics.
+Ground deformation
+InSAR displacement/coherence and reference metadata
+Displacement time series and deformation map.
+SAR visualisation
+HH, HV, VV, VV/VH, backscatter, coherence and other available SAR measurements
+False-colour RGB composites, custom channel combinations and thematic SAR colour maps
+Show SAR visualisation controls only when compatible SAR imagery and the required measurements are available.
+The available controls and outputs must be driven by backend capabilities. Do not show a control for an indicator or model that is not configured or supported for the selected dataset.
+6. Map and visualisation technology
+Area
+Recommendation
+Notes
+Frontend framework
+React + Next.js
+Use reusable components and typed API contracts.
+Map engine
+OpenLayers (recommended) or MapLibre GL JS
+OpenLayers is a strong fit for raster/vector GIS workflows, drawing and layer management.
+Charts
+A charting library such as ECharts, Plotly or Recharts
+Must support time-series, multiple series, forecast bands and tooltips.
+Raster display
+XYZ/WMTS tiles or COG via a raster tile service such as TiTiler
+Avoid loading full-resolution global rasters into the browser.
+SAR image visualisation
+Backend-generated RGB composites using Rasterio, NumPy and GDAL
+Support channel assignment, intensity stretching, colour mapping and export. Serve generated raster layers through the existing raster tile service.
+Geometry
+GeoJSON at API boundary
+Show geometry validity, CRS assumptions and area calculation method.
+Styling
+Tailwind CSS or existing project design system
+Use a consistent visual system and accessible contrast.
+7. Design direction
+Suggested visual direction: a professional scientific/geospatial dashboard. Use a restrained dark charcoal or neutral interface with muted sage/teal accents, clear typography and high-contrast map overlays. The map imagery should remain visually dominant. Use colour consistently for data categories and distinguish observed, derived and predicted layers.
+Observed data: solid line/normal opacity.
+Forecast: dashed line or clearly distinct treatment, with a shaded uncertainty band when supplied.
+Missing/invalid data: visible gaps or explicit no-data state; do not silently fill.
+Layer legend: units, date range, source and classification meaning.
+Colour ramps: use perceptually appropriate, colour-blind-conscious palettes and include legends.
+Avoid decorative dashboard metrics that are not backed by returned data.
+8. Frontend data contracts
+The frontend should consume backend APIs rather than calculate scientific outputs in browser components.
+API / resource
+Expected frontend use
+POST /api/analysis/jobs
+Submit AOI, phenomenon, date range, aggregation and requested outputs. Support optional SAR visualisation parameters, including requested visualisation type, RGB channel assignments, colour-map selection and display-stretch settings.
+GET /api/analysis/jobs/{id}
+Poll job status and show progress/error state.
+GET /api/analysis/jobs/{id}/observations
+Render historical chart series and observation metadata.
+GET /api/analysis/jobs/{id}/changes
+Render change metrics, events and change-layer references.
+GET /api/analysis/jobs/{id}/forecast
+Render forecast series, interval, model version and limitations.
+GET /api/analysis/jobs/{id}/layers
+Add returned raster/vector layers to the map. For SAR visualisation layers, return RGB channel assignments, visualisation type, display parameters, units where applicable, legend information and source metadata.
+GET /api/catalog/search
+Display available scenes and their footprints/metadata.
+These SAR visualisation parameters and layer metadata are proposed API contract extensions to coordinate with the backend engineer, not existing endpoints.
+Suggested chart point shape: timestamp, value, unit, quality_flag, valid_observation_count and source_reference. Suggested forecast response: timestamp, predicted_value, lower_bound, upper_bound, unit, model_version and forecast_status. Treat these as proposed contracts to coordinate with the backend engineer, not existing APIs.
+9. UX states and error handling
+Initial state: world map and concise instructions; no fabricated results.
+AOI selected: show geometry and area; enable analysis controls.
+Searching: loading state with cancellable request where possible.
+No imagery: explain that no matching scenes were found for the selected dates/area.
+Insufficient history: explain why forecasting is unavailable.
+Cloud/quality issue: indicate low valid coverage and allow date-range adjustment.
+Job failure: show safe error summary and retry action.
+Prediction unavailable: still show historical analytics where possible.
+Partial result: display available layers and clearly identify missing outputs.
+10. Accessibility, performance and security
+Ensure keyboard-accessible controls, visible focus states and readable contrast.
+Lazy-load panels, charts and raster layers; debounce map-driven searches.
+Use map tile services and viewport-based loading rather than downloading large rasters to the client.
+Cancel stale requests when AOI/date selections change.
+Keep API tokens and provider credentials on the server; never expose secrets in frontend code.
+Validate uploaded geometries and file types; enforce file-size and AOI-size limits.
+Sanitise user-provided names and metadata before rendering.
+Show provider attribution and licensing notices where required.
+11. Frontend implementation milestones
+Milestone
+Deliverable
+Acceptance criteria
+F1 — App shell
+Navigation, responsive layout and map workspace
+Application starts and map is usable on desktop.
+F2 — AOI tools
+Search, point selection, polygon drawing and GeoJSON upload
+AOI is validated and serialised for API submission.
+F3 — Catalogue layers
+Scene search, footprints, metadata and layer controls
+Results from backend appear on map and in a result panel.
+F4 — Temporal viewer
+Date selection, before/after comparison and animation
+Only real available observations are shown and labelled.
+F5 — Analytics dashboard
+Historical charts and change summaries
+Charts use API data with units, dates and quality indicators.
+F6 — Prediction view
+Forecast chart, uncertainty and optional spatial output
+Forecast is visually distinct and includes model/provenance details.
+F7 — Saved work
+Saved AOIs, job history and output exports
+User can revisit completed analysis jobs.
+F8 — SAR visualisation
+Interactive SAR false-colour composite generation and display controls.
+Acceptance criteria:
+Users can select compatible SAR channels and assign them to RGB.
+The interface adapts to available channels in the selected dataset.
+Users can adjust brightness, contrast and intensity stretching.
+The interface can display thematic SAR colour maps where supported.
+Generated visualisations can be compared and exported.
+Original scientific measurements remain unchanged.
+Visualisation metadata and legends are displayed correctly.
+12. Instructions to Antigravity
+Inspect the existing repository before coding. Identify framework, routing, styling, map libraries and current components.
+Preserve working functionality. Do not replace the project structure or introduce a second framework without explaining why.
+Implement the interface in incremental, testable milestones, beginning with the map workspace and AOI selection.
+Use mock data only for UI development and label it clearly as DEMO/SYNTHETIC. Do not present mock values as real satellite measurements.
+Create typed interfaces for AOIs, observations, time-series points, change events, forecast outputs and map layers.
+Keep scientific processing in backend services. Frontend code should visualise returned measurements and metadata.
+Implement SAR image visualisation as a separate frontend capability integrated with the existing map and layer system. Do not introduce a separate image-processing architecture in the frontend.
+The interface must obtain available SAR channels and visualisation capabilities from backend metadata rather than assuming fixed polarisation bands.
+Keep visualisation adjustments separate from scientific raster values and ML inputs. Use clearly labelled demo data if real SAR visualisation outputs are not yet available.
+Build reusable components: MapCanvas, AOITools, LayerPanel, SceneResults, TimeSlider, CompareViewer, AnalysisPanel, TimeSeriesChart, ForecastPanel, JobStatus, SARVisualisationPanel, RGBChannelSelector, ColourAdjustmentControls and SARLegend.
+Handle loading, empty, error, partial-data and insufficient-data states.
+Use environment variables for API base URLs; do not hard-code secrets.
+If backend endpoints are not yet available, create a documented API adapter and mock implementation that can be replaced without rewriting UI components.
+Run the project, check responsive layout, test map interactions and report the commands and environment variables needed to run it.
+13. Definition of done for the first frontend prototype
+A world map loads and supports pan/zoom.
+A user can search a place or select/draw an AOI.
+A user can choose an analysis topic and date range.
+The UI can display scene footprints or clearly labelled demo fixtures.
+The temporal viewer can compare and animate available dated imagery/layers.
+The analytics panel can render a historical time series from the agreed API contract.
+The prediction panel distinguishes observed and forecast values and displays uncertainty when supplied.
+The UI handles no-data, partial-data, loading and failed-job states.
+No fabricated scientific outputs are shown as real results.
+The interface supports SAR false-colour RGB composite visualisation when compatible SAR measurements are available.
+Users can adjust display parameters without modifying original scientific measurements.
+The interface displays appropriate legends, channel assignments and metadata.
+Unsupported visualisation options are hidden or disabled with an explanatory message.
+14. Relationship to the ML project
+This frontend brief is paired with the separate Geospatial Intelligence ML Project Context document. The two documents define a shared product but separate responsibilities: the ML/backend system discovers data, processes imagery, derives features and returns validated analytical outputs; the frontend selects AOIs, orchestrates requests and visualises observations, changes, forecasts and raster layers. Coordinate API schemas and status semantics between the two workstreams before integrating.

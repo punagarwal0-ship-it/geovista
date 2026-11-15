@@ -1,0 +1,329 @@
+
+Geospatial Intelligence & Predictive Earth Observation
+Document 1 — Machine Learning, data engineering and geospatial analytics system
+PROJECT CONTEXT • IMPLEMENTATION BRIEF FOR ANTIGRAVITY
+
+1. Project overview
+Build a modular geospatial intelligence platform that uses historical and current Earth-observation data to measure how selected locations change over time and, where scientifically supportable, estimate future changes. A user can select a point, polygon or map tile; the system retrieves relevant observations, derives geospatial features, produces historical time series and runs suitable analytical or predictive models.
+The system is intended to support environmental, land-surface, hydrological and selected geological monitoring. It must not claim to predict every Earth process with one universal model. Different phenomena require different sensors, labels, methods and validation.
+
+2. Product goals and non-goals
+Goals
+Analyse a user-selected geographical point, polygon, region or tiled area.
+Build historical time series from satellite observations and relevant ancillary datasets.
+Calculate interpretable indicators such as NDVI, EVI, NDWI, NDBI, land-cover proportions, water extent, surface temperature and SAR-derived measurements where data permits.
+Detect changes and anomalies between dates or across time.
+Forecast selected measurable variables and provide uncertainty estimates.
+Produce spatial prediction layers when the model and training data support spatial inference.
+Support multiple independent model families behind a common API and shared feature/data pipeline.
+Non-goals for the first release
+Do not attempt a single global model that predicts all geological, environmental and human processes.
+Do not promise earthquake prediction, exact disaster prediction or causal geological diagnosis.
+Do not process or forecast the entire planet synchronously for every user request.
+Do not treat visual image differences as scientifically valid change measurements without calibration, masking and comparable acquisition conditions.
+
+3. Core user workflow
+Receive AOI geometry from the frontend: point with analysis buffer, polygon, bounding box or tile identifier.
+Receive analysis configuration: phenomenon, date range, temporal aggregation, spatial resolution and requested outputs.
+Query an authorised satellite/data catalogue (STAC where available) for intersecting observations.
+Retrieve metadata and assets; fetch imagery or derived products only as required and permitted.
+Preprocess data: projection alignment, scale/offset calibration, cloud and shadow masking, quality filtering, mosaicking and resampling.
+Identify the SAR bands, polarisation channels and derived products available in the selected source product.
+Extract pixel-level or AOI-level features and aggregate them by date (daily, 5-day, monthly, seasonal or annual as appropriate).
+Run historical analytics, change detection and anomaly detection.
+If requested and sufficient data exists, run the relevant forecast or spatial prediction model.
+For SAR visualisation requests, generate a separate false-colour RGB composite from compatible available SAR channels or derived products; apply display-level intensity stretching, brightness and contrast adjustments; and retain the generated visualisation as a separate output layer. This stage follows SAR preprocessing and precedes raster serving. It must not alter calibrated source measurements or ML input features.
+Serve raster layers and generated visualisations through the raster-serving layer.
+Return observations, model outputs, uncertainty, quality flags, provenance and warnings to the frontend.
+
+4. Data sources and catalogue strategy
+Use a provider-agnostic catalogue adapter. NASA Earthdata Search should be used as a broad discovery interface for NASA Earth-science holdings, while ASF Data Search (Vertex) should be preferred for SAR-specific discovery where supported. NISAR data should be accessed through the Alaska Satellite Facility (ASF) DAAC and its documented search and access services. CSA and CONAE provide additional SAR data archives through their respective access platforms. Do not assume every provider supports STAC or a common API: use documented provider APIs and source assets, not undocumented internal endpoints.
+
+Source / dataset family | Potential use | Important considerations
+
+NASA Earthdata Search
+Discovery, comparison, visualization and access to NASA Earth-science datasets.
+Requires checking individual dataset documentation, product versions, metadata, quality information and access conditions. A NASA Earthdata Login account is required for downloading applicable datasets.
+
+ASF Data Search (Vertex)
+Discovery and access to SAR imagery from NASA's SAR holdings; searching by geographic area, acquisition date, product type and polarization.
+SAR-specific search parameters must be configured correctly. Check available sensors, product levels, processing options and download permissions. ASF also provides programmatic access through its Python Search Module and SearchAPI.
+
+NISAR (NASA–ISRO)
+SAR-based flood monitoring, vegetation and ecosystem monitoring, land deformation, earthquakes, landslides, glacier movement and other natural-hazard applications.
+NISAR provides L-band and S-band SAR observations. Data are archived through ASF DAAC. Understand the acquisition characteristics, polarization, product levels and specialised SAR processing requirements. InSAR applications require additional coherence and quality checks.
+
+RADARSAT Constellation Mission (RCM)
+Maritime surveillance, disaster management, flood mapping, agriculture, wetlands, forestry and coastal monitoring.
+Certain image products are publicly available through Canada's Earth Observation Data Management System (EODMS). Registration is required, and access to additional products may require vetted-user status. Review the accompanying product licence and access restrictions.
+
+RADARSAT-1 archive
+Historical SAR observations for environmental change analysis, disaster management, agriculture, oceanography and marine monitoring.
+The Canadian archive is available under an Open Government Licence. Data can be accessed through EODMS and Amazon Web Services (AWS). Account for historical acquisition dates, sensor characteristics and differences when comparing with newer SAR missions.
+
+SAOCOM catalogue (CONAE)
+Access to Argentina's SAOCOM SAR imagery for environmental, agricultural and other Earth-observation applications.
+Catalogue searches and thumbnail visualisation are publicly accessible without prior registration. Product downloads, processing requests and new acquisition requests require registration, an agreement with CONAE and the relevant product-use licence.
+
+NASA SAR learning and training resources (Earthdata, ARSET and CSA tutorials)
+Understanding SAR fundamentals, sensor characteristics, polarisation, backscatter, image interpretation, preprocessing and SAR applications.
+These are educational and technical resources rather than independent satellite data collections. Use them to guide processing workflows and interpretation; verify actual data availability through the relevant provider catalogue.
+
+NISAR StoryMaps and Applications White Papers
+Understanding practical SAR applications involving floods, wildfires, land subsidence, oil slicks, glacial motion, landslides and other environmental hazards.
+These resources provide application examples, demonstrations and technical background. They should not be treated as substitutes for downloadable source imagery or operational data APIs.
+
+UAVSAR Postcards
+Studying airborne SAR imagery and visual examples of Earth-surface processes using false-colour composites.
+These are educational visual resources, not a general-purpose satellite imagery catalogue. Distinguish airborne UAVSAR observations from spaceborne SAR datasets when designing processing workflows. UAVSAR Postcards demonstrate how SAR observations can be represented using false-colour composites to highlight surface features and changes. They are not an operational imagery source or data API. Generate platform visualisations from accessible source imagery or derived products; do not depend on postcard images as processing inputs. Do not assume every SAR dataset provides the same polarisation channels or derived measurements.
+
+Every observation must retain provenance: provider, collection, item/product ID, acquisition time, processing level, sensor, spatial resolution, cloud/quality metadata where applicable, licence/access notes and processing version.
+
+Official resources and documentation
+The following links correspond to the sources in the revised catalogue strategy:
+- NASA Earthdata Search https://search.earthdata.nasa.gov/search – NASA Earth-science data discovery and access.
+- ASF Data Search Vertex https://search.asf.alaska.edu/ – SAR data discovery and download.
+- NISAR Data User Guide https://nisar-docs.asf.alaska.edu/ – NISAR data access and processing guidance.
+- NASA Introduction to Remote Sensing https://www.earthdata.nasa.gov/learn/earth-observation-data-basics/remote-sensing – Remote-sensing fundamentals.
+- NASA Introduction to SAR https://www.earthdata.nasa.gov/learn/earth-observation-data-basics/sar – SAR principles and applications.
+- NASA ARSET Training https://appliedsciences.nasa.gov/get-involved/training – Remote-sensing and SAR training.
+- NISAR StoryMaps https://nisar.jpl.nasa.gov/applications/arcgis-storymaps/ – Practical SAR application examples.
+- NISAR Applications White Papers https://nisar.jpl.nasa.gov/applications/societal-benefit/ – Application-specific technical material.
+- UAVSAR Postcards https://uavsar.jpl.nasa.gov/education/postcards.html – Airborne SAR visual examples and false-colour educational references.
+- CSA RADARSAT Constellation Mission Data https://donnees-data.asc-csa.gc.ca/en/dataset/rcm – RCM data catalogue.
+- CSA RADARSAT-1 Data https://donnees-data.asc-csa.gc.ca/en/dataset/radarsat1 – Historical SAR archive.
+- CSA SAR Python Tutorial https://github.com/asc-csa/Synthetic_Aperture_Radar_Tutorial – Practical SAR processing using Python and QGIS.
+- CONAE SAOCOM Catalogue https://catalogos.conae.gov.ar/catalogo/catalogoSatSaocomInfo.html – SAOCOM catalogue and access requirements.
+
+5. Feature engineering
+Feature family | Examples | Potential interpretation
+
+Vegetation
+NDVI, EVI, vegetation fraction, seasonal amplitude
+Vegetation condition, phenology, disturbance and recovery.
+
+Water
+NDWI/MNDWI, water-pixel fraction, water-body area
+Surface-water extent and its seasonal/interannual change.
+
+Built-up / land cover
+NDBI, land-cover classes, impervious fraction
+Urban expansion and land-use transitions.
+
+Thermal
+Land-surface temperature, thermal anomalies
+Surface heating and thermal trends; not direct air temperature.
+
+SAR
+Backscatter, VV/VH ratios, coherence, InSAR displacement
+Flood/water mapping and selected surface-deformation measurements.
+
+Terrain
+Elevation, slope, aspect, curvature
+Terrain context and susceptibility covariates.
+
+Climate / hydrology
+Rainfall, temperature, drought indicators, soil moisture
+Drivers and context for environmental trends.
+
+Feature calculations must use appropriate spectral bands, scale factors and masks. Store units, formulas, valid-pixel counts and quality metadata. Do not compare incompatible sensors or seasons without harmonisation or explicit adjustment.
+
+SAR Image Visualisation and False-Colour Composites
+Generate false-colour RGB composites by assigning available SAR polarisation channels (for example HH, HV and VV) to red, green and blue channels where those channels are provided by the source product. Support custom channel combinations to highlight different surface characteristics, but only where the selected measurements and product semantics make the combination valid.
+Apply intensity scaling and stretching for display purposes, using configurable display ranges and suitable stretch methods. Brightness and contrast adjustments may also be applied to the rendered visualisation.
+Provide separate visualisation options for derived SAR products such as coherence, interferometric phase and displacement, where those products are available. These thematic products must retain their own appropriate legends, units and interpretation; they are not interchangeable with ordinary polarisation-based RGB composites.
+False-colour composites are visual representations of SAR measurements, not new ML features by themselves. Measurements used by ML models must retain their calibrated numerical values, units, quality information and appropriate scientific preprocessing. Display adjustments must never overwrite source values or change ML inputs.
+
+6. Model architecture: hybrid and modular
+Recommended architecture: a shared geospatial data and feature pipeline with specialised model services. A model registry maps each phenomenon and requested output to an approved model, feature schema and validation profile.
+
+Task | Baseline / first implementation | Advanced option
+
+Historical change metrics
+Index differences, thresholding, area statistics
+Learned change detection / Siamese U-Net
+
+Land-cover classification
+Random Forest or XGBoost
+U-Net / segmentation transformer
+
+Time-series forecasting
+Seasonal baseline, SARIMA, XGBoost
+LSTM/GRU, Temporal Fusion Transformer
+
+Flood extent / susceptibility
+SAR thresholding; Random Forest / XGBoost
+U-Net or ConvLSTM with event-based data
+
+Spatial expansion
+Transition matrix + cellular automata / ML
+Spatiotemporal CNN / ConvLSTM
+
+Ground deformation
+Validated InSAR processing and trend estimation
+Spatiotemporal models using deformation and covariates
+
+Anomaly detection
+Robust seasonal residuals / statistical thresholds
+Isolation Forest or sequence autoencoder
+
+Select models based on the phenomenon, sensor, label availability and prediction target. A numerical forecast of an index is not equivalent to predicting the real-world event represented by that index.
+
+Modular service responsibilities
+Add a separate SAR Visualisation Service to the modular architecture. It generates RGB composites from compatible available SAR bands or derived products, applies configurable display-only visualisation parameters, and produces map-ready raster outputs. It remains independent of ML model training, evaluation and inference. It must not treat visual colour adjustments as ML predictions or model outputs, and must not modify original calibrated SAR data or ML input features. Reuse the shared raster-processing and raster-serving infrastructure; this service is a processing/presentation capability, not a new ML model family.
+
+7. Recommended first use case
+Build a vegetation/land-cover change prototype for one well-defined region before scaling globally. Use Sentinel-2 and/or Landsat surface reflectance, with cloud/shadow masking and a consistent temporal aggregation.
+Inputs: AOI, date range, optical imagery, quality masks, and optionally rainfall/temperature.
+Features: monthly or seasonal NDVI/EVI, valid observation count, vegetation/land-cover class proportions.
+Historical outputs: time-series chart, area statistics, change map and anomaly markers.
+Prediction output: forecast of a clearly defined variable (for example seasonal median NDVI), with uncertainty interval.
+Spatial output: only add a future raster map if a spatially trained/validated model is available; do not paint a scalar trend across the AOI and call it a spatial forecast.
+
+8. Validation, uncertainty and scientific safeguards
+Use chronological holdout: train on earlier dates and evaluate on later unseen dates.
+Use spatial holdout: evaluate on geographically separate areas to test generalisation.
+Avoid leakage from overlapping tiles, adjacent pixels, future-derived composites or duplicated scenes.
+Compare against simple baselines such as persistence, seasonal climatology and linear trend.
+Report metrics appropriate to the task: MAE/RMSE for continuous forecasts; F1/IoU/precision-recall for classification and segmentation; calibration/coverage for uncertainty.
+Display confidence or uncertainty, data gaps, cloud contamination, observation count and model limitations.
+Do not issue a prediction when required data quality or history length is insufficient; return an explicit insufficient-data status.
+Separate correlation, forecast and causal explanation. Do not infer causes from imagery alone.
+
+9. Suggested data and service architecture
+Layer | Suggested implementation | Responsibility
+
+Catalogue adapters
+Python services; STAC client; provider-specific adapters
+Discover scenes and retrieve metadata/assets.
+
+Raster processing
+GDAL, Rasterio, xarray, Dask where needed
+Preprocess imagery and derive features. Keep source rasters and calibrated measurements immutable; create derived processing products as separate assets.
+
+SAR visualisation
+Rasterio and GDAL for raster reading/processing; NumPy for channel combination and numerical operations; reuse TiTiler or the existing raster-serving layer
+Generate display-only false-colour composites and thematic SAR renderings from available source bands or derived products; apply configurable channel assignment, intensity stretching, brightness and contrast; write map-ready raster outputs as separate assets. Do not introduce a standalone service stack where the existing raster-processing and serving infrastructure can be reused.
+
+Geospatial database
+PostgreSQL + PostGIS
+AOIs, footprints, tile index, feature summaries and job metadata.
+
+Raster/object storage
+Cloud-Optimized GeoTIFF + S3-compatible object storage
+Store derived rasters, model outputs and selected source assets where permitted. Keep generated visualisation assets separate from original source rasters and scientific measurement products.
+
+Feature/time-series store
+PostgreSQL/Parquet or time-series tables
+Store date-indexed features and quality statistics.
+
+ML framework
+Scikit-learn, XGBoost, PyTorch
+Train, evaluate and execute models.
+
+Experiment tracking
+MLflow
+Track datasets, parameters, metrics and model versions.
+
+API and job execution
+FastAPI + background worker/queue
+Expose analysis endpoints and run long jobs asynchronously.
+
+Raster serving
+TiTiler or equivalent
+Serve map tiles and raster visualisations, including generated SAR visualisation outputs.
+
+10. API contract proposal
+Design asynchronous jobs for expensive analyses. Example conceptual endpoints:
+POST /api/analysis/jobs — submit AOI, phenomenon, date range, resolution and requested outputs. Optionally accept a separate SAR visualisation configuration containing requested visualisation type, RGB channel assignments, intensity stretch method and display range, brightness and contrast adjustments. Keep these display parameters separate from ML model parameters.
+GET /api/analysis/jobs/{job_id} — return queued/running/completed/failed status.
+GET /api/analysis/jobs/{job_id}/observations — historical time-series values and quality metadata.
+GET /api/analysis/jobs/{job_id}/changes — change metrics and detected events.
+GET /api/analysis/jobs/{job_id}/forecast — future values, intervals, model version and evaluation summary.
+GET /api/analysis/jobs/{job_id}/layers — raster/vector layer references for map display. For generated SAR visualisation layers, also return visualisation type, source band/channel assignments, display-stretch and adjustment parameters, legend/display metadata, units where applicable, and source-product provenance.
+GET /api/catalog/search — discover scenes for an AOI and date range.
+Use GeoJSON geometry in EPSG:4326 at the API boundary unless a documented endpoint specifies otherwise. Validate geometry, area limits, date range, coordinate reference system and user permissions.
+These are proposed API contract extensions, not existing endpoints; coordinate the exact request and response schemas with the frontend engineer.
+
+11. Data model essentials
+Entity | Key fields
+
+AOI
+id, user_id, name, geometry, CRS, created_at
+
+Observation
+id, provider, collection, product_id, acquired_at, footprint, assets, quality, resolution
+
+FeatureSeries
+aoi_id/tile_id, feature_name, timestamp, value, unit, valid_pixel_count, quality_flags, source_ids
+
+AnalysisJob
+id, aoi_id, phenomenon, parameters, status, submitted_at, completed_at, error
+
+ModelRun
+job_id, model_id, model_version, input_schema, training_data_version, metrics, uncertainty
+
+OutputLayer
+job_id, layer_type, asset_uri, CRS, band descriptions, metadata, visualisation_type, source_band/channel_assignments, display_stretch_method, display_range, brightness, contrast, legend_metadata, units, source_observation_ids, source_product_ids
+
+OutputLayer visualisation metadata describes the rendered output only. It must not replace or overwrite source raster metadata, calibrated values or ML feature records.
+
+12. Development milestones
+Milestone | Deliverable | Acceptance criteria
+
+M1 — Data access
+One provider/catalogue adapter
+Can search and retrieve metadata for a test AOI and date range.
+
+M2 — Historical features
+Preprocessing and feature pipeline
+Produces quality-controlled time-series features for one AOI.
+
+M3 — Historical analytics
+Charts and change metrics API
+Returns dates, values, units, valid counts and provenance.
+
+M4 — Baseline prediction
+One forecast model
+Chronological and spatial evaluation against baselines; uncertainty reported.
+
+M5 — Spatial output
+One validated change/prediction layer
+Raster/vector output can be visualised and its limitations are documented.
+
+M7 — SAR Visualisation
+SAR false-colour composite generation and display adjustments.
+Compatible SAR channels can be assigned to RGB. A false-colour composite can be generated from available source data. Display adjustments can be applied without modifying source measurements. Generated outputs can be served as map layers with appropriate metadata. Unsupported channels or visualisation options are handled gracefully.
+
+M6 — Model expansion
+Model registry and second phenomenon
+New model can be added without rewriting shared pipeline.
+
+13. Instructions to Antigravity
+First inspect the existing repository and report its framework, structure, dependencies and current functionality. Do not overwrite an existing project blindly.
+Propose a clean modular architecture and implementation plan before making large changes.
+Implement the first vertical slice: one AOI, one data source, one measurable phenomenon, historical feature extraction, graph-ready API response and one validated baseline forecast.
+Use environment variables for credentials. Never hard-code API keys, tokens or private endpoints.
+Use documented APIs and respect provider licensing, attribution, rate limits and download restrictions.
+Create reproducible preprocessing and training scripts, configuration files, tests and a README.
+Keep model inference separate from the frontend. Return provenance, units, quality flags and uncertainty.
+Use synthetic/sample fixtures for development when credentials or provider access are unavailable, and label them clearly as synthetic.
+Do not fabricate satellite observations, training labels, validation scores or prediction accuracy.
+Treat SAR visualisation as a separate processing capability, not an ML model. Detect available polarisation channels, bands and derived products from source metadata rather than assuming fixed inputs. Keep scientific measurements, ML input features and display-rendered outputs separate. Do not fabricate missing polarisation channels or derived SAR products. Use UAVSAR Postcards as a visual and educational reference for false-colour representation, not as a substitute for accessible source data. Reuse the existing processing and raster-serving architecture wherever possible. Keep visualisation parameters separate from ML model parameters.
+After each milestone, run tests and provide a concise summary of files changed, commands to run, assumptions and remaining work.
+
+14. Definition of done for the first ML prototype
+A user AOI can be submitted and validated.
+A documented data source can be queried for the AOI and time window.
+The pipeline produces a date-indexed feature series with units and quality metadata.
+Historical values and change metrics are available through an API.
+A baseline forecast is evaluated on unseen future dates and includes uncertainty or a clearly stated limitation.
+A result includes data provenance, model version and quality warnings.
+The system can return an honest insufficient-data response rather than inventing an output.
+The system can generate false-colour SAR composites from compatible source channels.
+Users can adjust visualisation parameters without changing the original calibrated raster or ML inputs.
+Generated SAR visualisation layers retain channel assignments, visualisation settings and source-product provenance.
+The system handles unavailable channels and unsupported products without fabricating outputs.
+
+Overall implementation principle
+SAR visualisation is an additional geospatial processing and presentation capability. It must complement the existing historical analytics, change detection and prediction pipeline without altering its scientific validity or ML results.
